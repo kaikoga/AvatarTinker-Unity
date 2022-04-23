@@ -27,7 +27,7 @@ using UnityEditor.Animations;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
 
-namespace Silksprite.ResetClipGenerator
+namespace Silksprite.AvatarTinker.ResetClipGenerator
 {
     public class ResetClipGeneratorWindow : EditorWindow
     {
