@@ -20,8 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
+using VRC.SDK3.Avatars.Components;
 
 namespace Silksprite.AvatarTinker.VRC.ResetClipGenerator
 {
@@ -32,7 +36,7 @@ namespace Silksprite.AvatarTinker.VRC.ResetClipGenerator
             titleContent = new GUIContent("Reset Clip Generator");
         }
 
-#if VRC_SDK_VRCSDK3
+#if !VRC_SDK_VRCSDK3
         public void OnGUI()
         {
             EditorGUILayout.HelpBox("リセットアニメーション自動生成くんを利用する場合は、VRCSDK Avatar 3.0が必要です", MessageType.Error);
