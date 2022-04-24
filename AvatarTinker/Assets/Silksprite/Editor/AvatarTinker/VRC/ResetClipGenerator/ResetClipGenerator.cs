@@ -20,24 +20,26 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
-using UnityEditor.Animations;
 using UnityEngine;
-using VRC.SDK3.Avatars.Components;
 
-namespace Silksprite.AvatarTinker.ResetClipGenerator
+namespace Silksprite.AvatarTinker.VRC.ResetClipGenerator
 {
     public class ResetClipGeneratorWindow : EditorWindow
     {
-        [SerializeField] VRCAvatarDescriptor avatarDescriptor;
-        [SerializeField] List<AnimationClip> resetClips;
-
         public void OnEnable()
         {
             titleContent = new GUIContent("Reset Clip Generator");
         }
+
+#if VRC_SDK_VRCSDK3
+        public void OnGUI()
+        {
+            EditorGUILayout.HelpBox("リセットアニメーション自動生成くんを利用する場合は、VRCSDK Avatar 3.0が必要です", MessageType.Error);
+        }
+#else
+        [SerializeField] VRCAvatarDescriptor avatarDescriptor;
+        [SerializeField] List<AnimationClip> resetClips;
 
         public void OnGUI()
         {
@@ -48,6 +50,8 @@ namespace Silksprite.AvatarTinker.ResetClipGenerator
 
             var serializedObject = new SerializedObject(this);
             GUILayout.Label("リセットアニメーション自動生成くん", new GUIStyle{fontStyle = FontStyle.Bold});
+            GUILayout.Space(4f);
+            EditorGUILayout.HelpBox("Write Defaults Offで運用する際に必要になる、アニメーションしていないプロパティを初期状態に戻すためのリセットアニメーションを生成します。\nこのツールはシーンに置いてある状態を初期状態として利用します。".Replace(" ", " "), MessageType.Info);
             GUILayout.Space(4f);
             HelpLabel("1. あらかじめリセットアニメーション用の空のAnimation ClipをAnimator Controllerの一番上のレイヤーに組み込んでおく");
             HelpLabel("2. シーン上のAvatarDescriptorを↓にセットする");
@@ -164,6 +168,7 @@ namespace Silksprite.AvatarTinker.ResetClipGenerator
                 });
             }
         }
+#endif
 
         [MenuItem("Window/Silksprite/Reset Clip Generator", false, 60000)]
         public static void CreateWindow()
