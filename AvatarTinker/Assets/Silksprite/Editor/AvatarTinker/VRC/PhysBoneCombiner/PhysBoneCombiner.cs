@@ -56,6 +56,8 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
         [SerializeField] List<Transform> childBones = new List<Transform>();
         [SerializeField] List<VRCPhysBone> childPhysBones = new List<VRCPhysBone>();
 
+        [SerializeField] PhysBoneDestination destination = PhysBoneDestination.PhysBoneRootTransform;
+
         public void OnGUI()
         {
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
@@ -114,7 +116,8 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             }
 
             HelpLabel("4. Child Phys Bonesの中身が２つ以上入っていたらそれはコピペコンポーネントなので、ボタンを押す");
-            using (new EditorGUI.DisabledScope(targetPhysBone == null || parentBone == null || childBones == null))
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("destination"));
+            using (new EditorGUI.DisabledScope(targetPhysBone == null || parentBone == null || childBones == null || childBones.Count == 0))
             {
                 using (new EditorGUI.DisabledScope(isComposed))
                 {
@@ -129,6 +132,10 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                     {
                         DisassembleMultiChild();
                     }
+                }
+                if (GUILayout.Button("Move PhysBone"))
+                {
+                    MovePhysBone();
                 }
             }
             HelpLabel("5. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
@@ -197,12 +204,12 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
         {
             var allAffectedList = childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
             var ignoreList = AffectedListToIgnoreList(parentBone, allAffectedList, false).ToList();
-            targetPhysBone.rootTransform = parentBone;
+            targetPhysBone = CreatePhysBone(parentBone, parentBone, childBones.First());
             targetPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Ignore;
             targetPhysBone.ignoreTransforms = ignoreList;
             foreach (var childPhysBone in childPhysBones.ToArray())
             {
-                if (childPhysBone != targetPhysBone) DestroyImmediate(childPhysBone);
+                if (childPhysBone) DestroyImmediate(childPhysBone);
             }
 
             CollectPhysBones();
@@ -211,15 +218,13 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
         void DisassembleMultiChild()
         {
             var allAffectedList = IgnoreListToAffectedList(targetPhysBone, false).ToList();
-            foreach (Transform child in parentBone)
+            foreach (Transform child in childBones)
             {
                 var childAffectedList = allAffectedList.Where(t => IsDescendant(child, t)).ToList();
                 if (!childAffectedList.Any()) continue;
                 var ignoreList = AffectedListToIgnoreList(child, childAffectedList, false).ToList();
 
-                var childPhysBone = child.gameObject.AddComponent<VRCPhysBone>();
-                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(targetPhysBone), childPhysBone);
-                childPhysBone.rootTransform = child;
+                var childPhysBone = CreatePhysBone(child, parentBone, child);
                 childPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Average;
                 childPhysBone.ignoreTransforms = ignoreList;
             }
@@ -227,6 +232,50 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             DestroyImmediate(targetPhysBone);
 
             CollectPhysBones();
+        }
+
+        void MovePhysBone()
+        {
+            var newPhysBone = CreatePhysBone(targetPhysBone.GetRootTransform(), parentBone, childBones.First());
+            DestroyImmediate(targetPhysBone);
+            targetPhysBone = newPhysBone;
+
+            CollectPhysBones();
+        }
+
+        VRCPhysBone CreatePhysBone(Transform physBoneRoot, Transform parentBone, Transform firstChildBone)
+        {
+            VRCPhysBone physBone;
+            switch (destination)
+            {
+                case PhysBoneDestination.AvatarRoot:
+                    physBone = avatarRoot.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                case PhysBoneDestination.HipParent:
+                    physBone = avatarRoot.GetBoneTransform(HumanBodyBones.Hips).parent.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                case PhysBoneDestination.HipBone:
+                    physBone = avatarRoot.GetBoneTransform(HumanBodyBones.Hips).gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                case PhysBoneDestination.PhysBoneRootTransformParent:
+                    physBone = physBoneRoot.parent.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                case PhysBoneDestination.PhysBoneRootTransform:
+                    physBone = physBoneRoot.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                case PhysBoneDestination.ParentBone:
+                    physBone = parentBone.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                case PhysBoneDestination.FirstChildBone:
+                    physBone = firstChildBone.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+                default:
+                    physBone = physBoneRoot.gameObject.AddComponent<VRCPhysBone>();
+                    break;
+            }
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(targetPhysBone), physBone);
+            physBone.rootTransform = physBoneRoot;
+            return physBone;
         }
 
         static bool IsCommonSettings(VRCPhysBone a, VRCPhysBone b)
@@ -288,6 +337,17 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
         }
         
         static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
+
+        enum PhysBoneDestination
+        {
+            AvatarRoot,
+            HipParent,
+            HipBone,
+            PhysBoneRootTransformParent,
+            PhysBoneRootTransform,
+            ParentBone,
+            FirstChildBone
+        }
 
 #endif
 
