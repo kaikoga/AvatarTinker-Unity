@@ -111,11 +111,11 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             {
                 if (targetPhysBone.GetRootTransform().parent == targetPhysBone.transform && CollectHumanoidBones(avatarRoot).Contains(targetPhysBone.transform))
                 {
-                    EditorGUILayout.HelpBox("Humanoidボーンに刺さっていたDynamicBoneが自動変換されたような構造が検知されました。アバターの前髪がJawボーンとして誤検知されていたりしないか確認してください。\nPhysBoneコンポーネントの修正が必要かもしれません。", MessageType.Warning);
+                    EditorGUILayout.HelpBox("Humanoidボーンに刺さっていたDynamicBoneが自動変換されたような構造が検知されました。アバターの前髪がJawボーンとして誤検知されていたりしないか確認してください。\nPhysBoneコンポーネントの修正が必要かもしれません。\nアバターによっては正常なので、その場合はこのメッセージを気にしないでください。", MessageType.Warning);
                 }
             }
 
-            HelpLabel("4. Child Phys Bonesの中身が２つ以上入っていたらそれはコピペコンポーネントなので、ボタンを押す");
+            HelpLabel("4. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、ボタンを押す");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("destination"));
             using (new EditorGUI.DisabledScope(targetPhysBone == null || parentBone == null || childBones == null || childBones.Count == 0))
             {
