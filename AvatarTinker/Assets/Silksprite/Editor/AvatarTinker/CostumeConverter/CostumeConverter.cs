@@ -33,7 +33,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
         Vector2 _scrollPosition = new Vector2(0, 0);
         static bool _lockGeneratedFields = true;
 
-        [SerializeField] Animator bodyAnimator;
+        [SerializeField] Animator avatarRoot;
         [SerializeField] SkinnedMeshRenderer costumeRenderer;
         [SerializeField] Transform humanoidHipsBone;
         [SerializeField] List<CostumeBoneMapping> costumeBoneMappings;
@@ -60,13 +60,12 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             _lockGeneratedFields = EditorGUILayout.ToggleLeft("出力フィールドを保護する（デバッグ用）", _lockGeneratedFields);
             GUILayout.Space(4f);
             HelpLabel("1. アバターをUnpack Prefabする");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("bodyAnimator"));
             HelpLabel("2. アバターのAnimatorを↓にセットする");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("bodyAnimator"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("avatarRoot"));
             HelpLabel("3. 衣装のSkinnedMeshRendererを↓にセットする");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("costumeRenderer"));
             HelpLabel("4. Match Bonesボタンを押す");
-            using (new EditorGUI.DisabledScope(bodyAnimator == null || costumeRenderer == null))
+            using (new EditorGUI.DisabledScope(avatarRoot == null || costumeRenderer == null))
             {
                 if (GUILayout.Button("Match Bones"))
                 {
@@ -92,7 +91,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             DrawRelationHelp();
 
             HelpLabel("6. 個別に着せ方を調整するか、下のボタンで一括変換する\n※揺れものやConstraint、アニメーションが設定されているボーンは手動で除外してください！");
-            using (new EditorGUI.DisabledScope(bodyAnimator == null || costumeRenderer == null || costumeBoneMappings.Count == 0))
+            using (new EditorGUI.DisabledScope(avatarRoot == null || costumeRenderer == null || costumeBoneMappings.Count == 0))
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
@@ -153,10 +152,10 @@ namespace Silksprite.AvatarTinker.CostumeConverter
 
         void MatchBones()
         {
-            humanoidHipsBone = bodyAnimator.GetBoneTransform(HumanBodyBones.Hips);
+            humanoidHipsBone = avatarRoot.GetBoneTransform(HumanBodyBones.Hips);
             var costumeBones = costumeRenderer.bones;
-            var otherCostumeBones = bodyAnimator.GetComponentsInChildren<SkinnedMeshRenderer>().Where(renderer => renderer != costumeRenderer).SelectMany(renderer => renderer.bones);
-            var humanoidBones = Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(hbb => bodyAnimator.GetBoneTransform(hbb)).ToArray();
+            var otherCostumeBones = avatarRoot.GetComponentsInChildren<SkinnedMeshRenderer>().Where(renderer => renderer != costumeRenderer).SelectMany(renderer => renderer.bones);
+            var humanoidBones = CollectHumanoidBones(avatarRoot);
             costumeBoneMappings = costumeBones.Select(bone =>
             {
                 if (bone == null)
@@ -240,7 +239,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
 
             foreach (var mapping in costumeBoneMappings.Where(mapping => mapping.selected && mapping.relation == CostumeRelation.Redundant))
             {
-                foreach (var renderer in bodyAnimator.GetComponentsInChildren<SkinnedMeshRenderer>())
+                foreach (var renderer in avatarRoot.GetComponentsInChildren<SkinnedMeshRenderer>())
                 {
                     var bones = renderer.bones;
                     var index = Array.IndexOf(bones, mapping.bone);
@@ -265,6 +264,8 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             
             MatchBones();
         }
+
+        static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
 
         [MenuItem("Window/Silksprite/Costume Converter", false, 60000)]
         public static void CreateWindow()
