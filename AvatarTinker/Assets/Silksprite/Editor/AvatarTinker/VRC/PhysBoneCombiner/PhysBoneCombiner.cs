@@ -291,7 +291,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
 
 #endif
 
-        [MenuItem("Window/Silksprite/Phys Bone Combiner", false, 60000)]
+        [MenuItem("Window/AvatarTinker/VRChat/Phys Bone Combiner", false, 60000)]
         public static void CreateWindow()
         {
             CreateInstance<PhysBoneCombinerWindow>().Show();

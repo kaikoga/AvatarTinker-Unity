@@ -267,7 +267,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
 
         static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
 
-        [MenuItem("Window/Silksprite/Costume Converter", false, 60000)]
+        [MenuItem("Window/AvatarTinker/Costume Converter", false, 60000)]
         public static void CreateWindow()
         {
             CreateInstance<CostumeConverterWindow>().Show();

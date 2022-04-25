@@ -174,7 +174,7 @@ namespace Silksprite.AvatarTinker.VRC.ResetClipGenerator
         }
 #endif
 
-        [MenuItem("Window/Silksprite/Reset Clip Generator", false, 60000)]
+        [MenuItem("Window/AvatarTinker/VRChat/Reset Clip Generator", false, 60000)]
         public static void CreateWindow()
         {
             CreateInstance<ResetClipGeneratorWindow>().Show();
