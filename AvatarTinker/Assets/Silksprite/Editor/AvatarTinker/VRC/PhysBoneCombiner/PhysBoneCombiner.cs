@@ -27,7 +27,6 @@ using UnityEditor;
 using UnityEngine;
 using VRC.Dynamics;
 using VRC.SDK3.Dynamics.PhysBone.Components;
-using Vector2 = UnityEngine.Vector2;
 
 namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
 {
@@ -48,10 +47,11 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
 #else
         [SerializeField] Animator avatarRoot;
         [SerializeField] List<VRCPhysBone> allPhysBones = new List<VRCPhysBone>();
+        [SerializeField] List<PhysBoneRole> allPhysBonesRole = new List<PhysBoneRole>();
         
         [SerializeField] int targetPhysBoneIndex;
         [SerializeField] VRCPhysBone targetPhysBone;
-        [SerializeField] bool isComposed;
+        [SerializeField] PhysBoneRole targetPhysBoneRole;
         [SerializeField] Transform parentBone;
         [SerializeField] List<Transform> childBones = new List<Transform>();
         [SerializeField] List<VRCPhysBone> childPhysBones = new List<VRCPhysBone>();
@@ -93,6 +93,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     EditorGUILayout.ObjectField($"Element {i}", allPhysBones[i], typeof(VRCPhysBone), false);
+                    GUILayout.Label( HumanPhysBoneRole(allPhysBonesRole[i], true), GUILayout.Width(24f));
                     if (GUILayout.Button("Select"))
                     {
                         SelectTarget(i, allPhysBones[i]);
@@ -102,7 +103,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             HelpLabel("3. ↓のリストに親ボーン候補と（同じ揺れ方をする）子ボーン候補が入る");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("targetPhysBoneIndex"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("targetPhysBone"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("isComposed"));
+            EditorGUILayout.LabelField(serializedObject.FindProperty("targetPhysBoneRole").displayName, HumanPhysBoneRole(targetPhysBoneRole, false));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("parentBone"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("childBones"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("childPhysBones"));
@@ -115,18 +116,18 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                 }
             }
 
-            HelpLabel("4. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、ボタンを押す");
+            HelpLabel("4. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、動かしたい先にDestinationを設定してボタンを押す");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("destination"));
             using (new EditorGUI.DisabledScope(targetPhysBone == null || parentBone == null || childBones == null || childBones.Count == 0))
             {
-                using (new EditorGUI.DisabledScope(isComposed))
+                using (new EditorGUI.DisabledScope(targetPhysBoneRole != PhysBoneRole.Disassembled))
                 {
                     if (GUILayout.Button("Assemble Multi Child"))
                     {
                         AssembleMultiChild();
                     }
                 }
-                using (new EditorGUI.DisabledScope(!isComposed))
+                using (new EditorGUI.DisabledScope(targetPhysBoneRole != PhysBoneRole.Composed))
                 {
                     if (GUILayout.Button("Disassemble Multi Child"))
                     {
@@ -139,6 +140,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                 }
             }
             HelpLabel("5. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
+            EditorGUILayout.HelpBox("PhysBoneを動かすことも、分解することもできます。\n（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Warning);
             serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.EndScrollView();
@@ -147,6 +149,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
         void CollectPhysBones()
         {
             allPhysBones = avatarRoot.GetComponentsInChildren<VRCPhysBone>().ToList();
+            allPhysBonesRole = allPhysBones.Select(GuessPhysBoneRole).ToList();
             targetPhysBoneIndex = 0;
             targetPhysBone = null;
             parentBone = null;
@@ -166,38 +169,53 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             }
 
             Debug.Log(ExtractSettingString(target));
+            targetPhysBoneRole = GuessPhysBoneRole(targetPhysBone);
 
-            isComposed = targetPhysBone.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore;
-            if (targetPhysBone.GetRootTransform().childCount == 1 && targetPhysBone.GetRootTransform().parent.childCount > 1)
+            switch (targetPhysBoneRole)
             {
-                isComposed = false;
+                case PhysBoneRole.Composed:
+                {
+                    parentBone = targetPhysBone.GetRootTransform();
+                    childBones = new List<Transform>();
+                    childPhysBones = new List<VRCPhysBone>();
+                    foreach (Transform transform in parentBone)
+                    {
+                        if (targetPhysBone.ignoreTransforms.Contains(transform)) continue; 
+                        childBones.Add(transform);
+                    }
+                    break;
+                }
+                case PhysBoneRole.Disassembled:
+                {
+                    parentBone = targetPhysBone.GetRootTransform().parent;
+                    childBones = new List<Transform>();
+                    childPhysBones = new List<VRCPhysBone>();
+                    foreach (var childPhysBone in allPhysBones)
+                    {
+                        var childTransform = childPhysBone.GetRootTransform(); 
+                        if (childTransform.parent != parentBone) continue;
+                        if (!IsCommonSettings(targetPhysBone, childPhysBone)) continue;
+                        childBones.Add(childTransform);
+                        childPhysBones.Add(childPhysBone);
+                    }
+                    break;
+                }
+                default:
+                    parentBone = null;
+                    childBones = new List<Transform>();
+                    break;
+            }
+        }
+
+        static PhysBoneRole GuessPhysBoneRole(VRCPhysBone physBone)
+        {
+            var result = physBone.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore;
+            if (physBone.GetRootTransform().childCount == 1 && physBone.GetRootTransform().parent.childCount > 1)
+            {
+                result = false;
             }
 
-            if (isComposed)
-            {
-                parentBone = targetPhysBone.GetRootTransform();
-                childBones = new List<Transform>();
-                childPhysBones = new List<VRCPhysBone>();
-                foreach (Transform transform in parentBone)
-                {
-                    if (targetPhysBone.ignoreTransforms.Contains(transform)) continue; 
-                    childBones.Add(transform);
-                }
-            }
-            else
-            {
-                parentBone = targetPhysBone.GetRootTransform().parent;
-                childBones = new List<Transform>();
-                childPhysBones = new List<VRCPhysBone>();
-                foreach (var childPhysBone in allPhysBones)
-                {
-                    var childTransform = childPhysBone.GetRootTransform(); 
-                    if (childTransform.parent != parentBone) continue;
-                    if (!IsCommonSettings(targetPhysBone, childPhysBone)) continue;
-                    childBones.Add(childTransform);
-                    childPhysBones.Add(childPhysBone);
-                }
-            }
+            return result ? PhysBoneRole.Composed : PhysBoneRole.Disassembled;
         }
 
         void AssembleMultiChild()
@@ -335,9 +353,43 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             }
             return false;
         }
-        
+
         static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
 
+        enum PhysBoneRole
+        {
+            Composed,
+            Disassembled
+        }
+
+        string HumanPhysBoneRole(PhysBoneRole role, bool isLetter)
+        {
+            if (isLetter)
+            {
+                switch (role)
+                {
+                    case PhysBoneRole.Composed:
+                        return "+";
+                    case PhysBoneRole.Disassembled:
+                        return "-";
+                    default:
+                        return "?";
+                }
+            }
+            else
+            {
+                switch (role)
+                {
+                    case PhysBoneRole.Composed:
+                        return "+ Composed";
+                    case PhysBoneRole.Disassembled:
+                        return "- Disassembled";
+                    default:
+                        return "? 不明";
+                }
+            }
+        }
+        
         enum PhysBoneDestination
         {
             AvatarRoot,
