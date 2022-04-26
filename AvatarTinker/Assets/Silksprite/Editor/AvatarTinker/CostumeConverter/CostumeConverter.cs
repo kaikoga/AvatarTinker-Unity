@@ -82,9 +82,9 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             using (new EditorGUI.IndentLevelScope(1))
             {
                 var rect = EditorGUI.IndentedRect(EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight));
-                GUI.Label(CostumeBoneMappingColumns(rect, 1), "衣装ボーン");
-                GUI.Label(CostumeBoneMappingColumns(rect, 2), "接続先ボーン");
-                GUI.Label(CostumeBoneMappingColumns(rect, 3), "着せ方");
+                GUI.Label(CostumeBoneMappingColumns(rect, 1), "Costume Bone");
+                GUI.Label(CostumeBoneMappingColumns(rect, 2), "Base Bone");
+                GUI.Label(CostumeBoneMappingColumns(rect, 3), "Relation");
             }
             EditorGUILayout.PropertyField(serializedObject.FindProperty("costumeBoneMappings"));
 
@@ -122,31 +122,31 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             var relationsPresent = costumeBoneMappings.Select(mapping => mapping.relation).Distinct().ToArray();
             if (relationsPresent.Contains(CostumeRelation.NullBone))
             {
-                EditorGUILayout.HelpBox("「Null」:\nボーンの参照が見つかりません。\n心当たりがないならば、バックアップからやり直すことをお勧めします。", MessageType.Warning);
+                EditorGUILayout.HelpBox("「*Null」: Null\nボーンの参照が見つかりません。\n心当たりがないならば、バックアップからやり直すことをお勧めします。", MessageType.Warning);
             }
             if (relationsPresent.Contains(CostumeRelation.Unrelated))
             {
-                EditorGUILayout.HelpBox("「着ていない」:\nアバターはこの衣装を着ていません。\nセットした参照が正しいか確認してください。", MessageType.Warning);
+                EditorGUILayout.HelpBox("「*Unrelated」: 着ていない\nアバターはこの衣装を着ていません。\nセットした参照が正しいか確認してください。", MessageType.Warning);
             }
             if (relationsPresent.Contains(CostumeRelation.Humanoid))
             {
-                EditorGUILayout.HelpBox("「Humanoidボーン」:\nHumanoidを構成するボーンが指定されています。\n削減できません。", MessageType.Info);
+                EditorGUILayout.HelpBox("「Humanoid」: Humanoidボーン\nHumanoidを構成するボーンが指定されています。\n削減できません。", MessageType.Info);
             }
             if (relationsPresent.Contains(CostumeRelation.Shared))
             {
-                EditorGUILayout.HelpBox("「共有装飾ボーン」:\n他の衣装と共通で利用されているボーンが指定されています。\n削減できません。", MessageType.Info);
+                EditorGUILayout.HelpBox("「Shared」: 共有装飾ボーン\n他の衣装と共通で利用されているボーンが指定されています。\n削減できません。", MessageType.Info);
             }
             if (relationsPresent.Contains(CostumeRelation.Redundant))
             {
-                EditorGUILayout.HelpBox("「入れ子ボーン」:\n入れ子式の着せ替えを行った形跡を検知しました。\nこのボーンは削減可能です。", MessageType.Warning);
+                EditorGUILayout.HelpBox("「+Redundant」: 入れ子ボーン\n入れ子式の着せ替えを行った形跡を検知しました。\nこのボーンは削減可能です。", MessageType.Warning);
             }
             if (relationsPresent.Contains(CostumeRelation.Positioning))
             {
-                EditorGUILayout.HelpBox("「位置調整ボーン」:\nサイズ調整や揺れものなどでボーンの位置が動かされています。\n削減できません。", MessageType.Info);
+                EditorGUILayout.HelpBox("「Positioning」: 位置調整ボーン\nサイズ調整や揺れものなどでボーンの位置が動かされています。\n削減できません。", MessageType.Info);
             }
             if (relationsPresent.Contains(CostumeRelation.IndependentChild))
             {
-                EditorGUILayout.HelpBox("「固有装飾ボーン」:\nこの衣装固有のボーンです。\n削減できません。", MessageType.Info);
+                EditorGUILayout.HelpBox("「Independent Child」: 固有装飾ボーン\nこの衣装固有のボーンです。\n削減できません。", MessageType.Info);
             }
         }
 
@@ -320,21 +320,21 @@ namespace Silksprite.AvatarTinker.CostumeConverter
                 switch (relation)
                 {
                     case CostumeRelation.NullBone:
-                        return "Null";
+                        return "* Null";
                     case CostumeRelation.Unrelated:
-                        return "着ていない";
+                        return "* Unrelated";
                     case CostumeRelation.Humanoid:
-                        return "Humanoidボーン";
+                        return "Humanoid";
                     case CostumeRelation.Shared:
-                        return "共有装飾ボーン";
+                        return "Shared";
                     case CostumeRelation.Redundant:
-                        return "入れ子ボーン";
+                        return "+ Redundant";
                     case CostumeRelation.Positioning:
-                        return "位置調整ボーン";
+                        return "Positioning";
                     case CostumeRelation.IndependentChild:
-                        return "固有装飾ボーン";
+                        return "Independent Child";
                     default:
-                        return "不明";
+                        return "* Unknown";
                 }
             }
         }
