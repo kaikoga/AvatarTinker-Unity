@@ -33,6 +33,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
     public class PhysBoneCombinerWindow : EditorWindow
     {
         Vector2 _scrollPosition = new Vector2(0, 0);
+        static bool _lockGeneratedFields = true;
 
         public void OnEnable()
         {
@@ -72,8 +73,11 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             GUILayout.Space(4f);
             EditorGUILayout.HelpBox("同じ階層に存在する同じ設定のVRCPhysBoneを、MultiChildType=IgnoreとExcludeを駆使してまとめます。".Replace(" ", " "), MessageType.Info);
             GUILayout.Space(4f);
-            HelpLabel("0. DynamicBoneは事前にPhysBoneに変換しておく。");
-            HelpLabel("1. アバターを↓に入れてCollect PhysBonesボタンを押すと、使用されているPhysBoneコンポーネントがリストアップされる");
+            _lockGeneratedFields = EditorGUILayout.ToggleLeft("出力フィールドを保護する（デバッグ用）", _lockGeneratedFields);
+            GUILayout.Space(4f);
+            HelpLabel("1. DynamicBoneは事前にPhysBoneに変換しておく。");
+            GUILayout.Space(4f);
+            HelpLabel("2. アバターを↓に入れてCollect PhysBonesボタンを押すと、使用されているPhysBoneコンポーネントがリストアップされる");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("avatarRoot"));
             using (new EditorGUI.DisabledScope(avatarRoot == null))
             {
@@ -83,30 +87,37 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                 }
             }
 
-            HelpLabel("2. 操作対象のPhysBoneコンポーネントを選んでSelectボタンを押す");
+            HelpLabel("3. 操作対象のPhysBoneコンポーネントを選んでSelectボタンを押す");
             if (allPhysBones.Count == 0)
             {
-                GUILayout.Label("PhysBoneコンポーネントが検出されていません");
+                GUILayout.Label("No VRCPhysBone components");
             }
             for (var i = 0; i < allPhysBones.Count; i++)
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.ObjectField($"Element {i}", allPhysBones[i], typeof(VRCPhysBone), false);
-                    GUILayout.Label( HumanPhysBoneRole(allPhysBonesRole[i], true), GUILayout.Width(24f));
+                    using (new EditorGUI.DisabledScope(_lockGeneratedFields))
+                    {
+                        EditorGUILayout.ObjectField($"Element {i}", allPhysBones[i], typeof(VRCPhysBone), false);
+                        GUILayout.Label(HumanPhysBoneRole(allPhysBonesRole[i], true), GUILayout.Width(24f));
+                    }
+
                     if (GUILayout.Button("Select"))
                     {
                         SelectTarget(i, allPhysBones[i]);
                     }
                 }
             }
-            HelpLabel("3. ↓のリストに親ボーン候補と（同じ揺れ方をする）子ボーン候補が入る");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("targetPhysBoneIndex"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("targetPhysBone"));
-            EditorGUILayout.LabelField(serializedObject.FindProperty("targetPhysBoneRole").displayName, HumanPhysBoneRole(targetPhysBoneRole, false));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("parentBone"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("childBones"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("childPhysBones"));
+            HelpLabel("4. ↓のリストに親ボーン候補と（同じ揺れ方をする）子ボーン候補が入る");
+            using (new EditorGUI.DisabledScope(_lockGeneratedFields))
+            {
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("targetPhysBoneIndex"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("targetPhysBone"));
+                EditorGUILayout.LabelField(serializedObject.FindProperty("targetPhysBoneRole").displayName, HumanPhysBoneRole(targetPhysBoneRole, false));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("parentBone"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("childBones"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("childPhysBones"));
+            }
 
             if (targetPhysBone)
             {
@@ -116,7 +127,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                 }
             }
 
-            HelpLabel("4. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、動かしたい先にDestinationを設定してボタンを押す");
+            HelpLabel("5. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、動かしたい先にDestinationを設定してボタンを押す");
             EditorGUILayout.PropertyField(serializedObject.FindProperty("destination"));
             using (new EditorGUI.DisabledScope(targetPhysBone == null || parentBone == null || childBones == null || childBones.Count == 0))
             {
@@ -139,7 +150,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
                     MovePhysBone();
                 }
             }
-            HelpLabel("5. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
+            HelpLabel("6. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
             EditorGUILayout.HelpBox("PhysBoneを動かすことも、分解することもできます。\n（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Warning);
             serializedObject.ApplyModifiedProperties();
 
