@@ -28,7 +28,7 @@ using UnityEngine;
 using VRC.Dynamics;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 
-namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
+namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 {
     public class PhysBoneCombinerWindow : EditorWindow
     {
