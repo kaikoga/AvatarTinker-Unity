@@ -154,6 +154,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
             targetPhysBone = null;
             parentBone = null;
             childBones = new List<Transform>();
+            childPhysBones = new List<VRCPhysBone>();
         }
 
         void SelectTarget(int index, VRCPhysBone target)
