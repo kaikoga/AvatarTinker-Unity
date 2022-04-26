@@ -43,7 +43,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
 #if !VRC_SDK_VRCSDK3
         public void OnGUI()
         {
-            EditorGUILayout.HelpBox("PhysBone昇進ツールを利用する場合は、VRCSDK Avatar 3.0が必要です", MessageType.Error);
+            EditorGUILayout.HelpBox("PhysBone合成ツールを利用する場合は、VRCSDK Avatar 3.0が必要です", MessageType.Error);
         }
 #else
         [SerializeField] Animator avatarRoot;
@@ -415,7 +415,7 @@ namespace Silksprite.AvatarTinker.VRC.PhysBoneCombiner
 
 #endif
 
-        [MenuItem("Window/AvatarTinker/VRChat/Phys Bone Combiner", false, 60000)]
+        [MenuItem("Window/Avatar Tinker/VRChat/Phys Bone Combiner", false, 60000)]
         public static void CreateWindow()
         {
             CreateInstance<PhysBoneCombinerWindow>().Show();

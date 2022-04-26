@@ -55,7 +55,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             var serializedObject = new SerializedObject(this);
             GUILayout.Label("着せ替え変換ツール", new GUIStyle{fontStyle = FontStyle.Bold});
             GUILayout.Space(4f);
-            EditorGUILayout.HelpBox("入れ子ボーン式で着せ替えてしまったアバターや、デフォルト衣装が入れ子ボーン式でセットアップされているアバターをボーン共有式着せ替えに変換します。\n変換を行うためには、衣装と素体データとボーン構造が完全に一致している必要があります。".Replace(" ", " "), MessageType.Info);
+            EditorGUILayout.HelpBox("入れ子ボーン式で着せ替えてしまったアバターや、デフォルト衣装が入れ子ボーン式でセットアップされているアバターをボーン共有式着せ替えに変換します。\n変換を行うためには、衣装と素体データのボーン構造が完全に一致している必要があります。".Replace(" ", " "), MessageType.Info);
             GUILayout.Space(4f);
             _lockGeneratedFields = EditorGUILayout.ToggleLeft("出力フィールドを保護する（デバッグ用）", _lockGeneratedFields);
             GUILayout.Space(4f);
@@ -267,7 +267,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
 
         static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
 
-        [MenuItem("Window/AvatarTinker/Costume Converter", false, 60000)]
+        [MenuItem("Window/Avatar Tinker/Costume Converter", false, 60000)]
         public static void CreateWindow()
         {
             CreateInstance<CostumeConverterWindow>().Show();
