@@ -205,10 +205,28 @@ namespace Silksprite.AvatarTinker.CostumeConverter
                     var boneIsReactive = bone.GetComponents<Component>().Select(c => c.GetType().Name)
                         .Any(n =>
                         {
+                            // Latest AI to guess this bone is required
                             // This should mark DynamicBones, VRCPhysBones and SpringBones
                             if ( n.Contains("Bone")) return true;
+                            // This should mark Bone Colliders
+                            if ( n.Contains("Collider")) return true;
                             // This should mark Constraints
                             if ( n.Contains("Constraint")) return true;
+                            // Some other components we don't want to touch
+                            if ( n.Contains("Mesh")) return true;
+                            if ( n.Contains("Animation")) return true;
+                            if ( n.Contains("Particle")) return true;
+                            if ( n.Contains("Animator")) return true;
+                            if ( n.Contains("Trail")) return true;
+                            if ( n.Contains("Cloth")) return true;
+                            if ( n.Contains("Light")) return true;
+                            if ( n.Contains("RigidBody")) return true;
+                            if ( n.Contains("Joint")) return true;
+                            if ( n.Contains("Camera")) return true;
+                            if ( n.Contains("FlareLayer")) return true;
+                            if ( n.Contains("GUILayer")) return true;
+                            if ( n.Contains("AudioSource")) return true;
+                            if ( n.Contains("IK")) return true;
                             return false;
                         }); 
                     var boneIsIdentity = !(boneIsReactive || boneHasPosition);
