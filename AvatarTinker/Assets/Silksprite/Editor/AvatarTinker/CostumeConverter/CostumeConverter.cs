@@ -157,7 +157,7 @@ namespace Silksprite.AvatarTinker.CostumeConverter
             public Transform bone;
             public Transform baseBone;
             public CostumeRelation relation;
-            public bool IsPrefab => PrefabUtility.IsPartOfAnyPrefab(bone) && PrefabUtility.IsPartOfAnyPrefab(baseBone);
+            public bool IsPrefab => bone && PrefabUtility.IsPartOfAnyPrefab(bone) || baseBone && PrefabUtility.IsPartOfAnyPrefab(baseBone);
         }
 
         public enum CostumeRelation
