@@ -1,90 +1,28 @@
-// MIT License
-//
-// Copyright (c) 2021 kaikoga
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+#if VRC_SDK_VRCSDK3
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 using VRC.SDK3.Avatars.Components;
+using Object = UnityEngine.Object;
 
 namespace Silksprite.AvatarTinker.VRChat.ResetClipGenerator
 {
-    public class ResetClipGeneratorWindow : EditorWindow
+    [Serializable]
+    public class ResetClipGenerator
     {
-        public void OnEnable()
-        {
-            titleContent = new GUIContent("Reset Clip Generator");
-        }
+        [SerializeField] public VRCAvatarDescriptor avatarDescriptor;
+        [SerializeField] public List<AnimationClip> resetClips;
 
-#if !VRC_SDK_VRCSDK3
-        public void OnGUI()
-        {
-            EditorGUILayout.HelpBox("リセットアニメーション自動生成くんを利用する場合は、VRCSDK Avatar 3.0が必要です", MessageType.Error);
-        }
-#else
-        [SerializeField] VRCAvatarDescriptor avatarDescriptor;
-        [SerializeField] List<AnimationClip> resetClips;
-
-        public void OnGUI()
-        {
-            void HelpLabel(string message)
-            {
-                GUILayout.Label(message.Replace(" ", " "), new GUIStyle{wordWrap = true});
-            }
-
-            var serializedObject = new SerializedObject(this);
-            GUILayout.Label("リセットアニメーション自動生成くん", new GUIStyle{fontStyle = FontStyle.Bold});
-            GUILayout.Space(4f);
-            EditorGUILayout.HelpBox("Write Defaults Offで運用する際に必要になる、アニメーションしていないプロパティを初期状態に戻すためのリセットアニメーションを生成します。\nこのツールはシーンに置いてある状態を初期状態として利用します。".Replace(" ", " "), MessageType.Info);
-            GUILayout.Space(4f);
-            HelpLabel("1. あらかじめリセットアニメーション用の空のAnimation ClipをAnimator Controllerの一番上のレイヤーに組み込んでおく");
-            HelpLabel("2. シーン上のAvatarDescriptorを↓にセットする");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("avatarDescriptor"));
-            HelpLabel("3. Find Reset Clipsボタンを押す");
-            if (GUILayout.Button("Find Reset Clips"))
-            {
-                FindResetClips();
-            }
-            HelpLabel("4. ↓のリストにリセットアニメーションの候補が入るが、余計なものが入ってるのでリセットアニメーションではないものを人の手で取り除く");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("resetClips"));
-            HelpLabel("5. Generate Reset Clipsボタンを押す");
-            using (new EditorGUI.DisabledScope(avatarDescriptor == null || resetClips.Count == 0))
-            {
-                if (GUILayout.Button("Generate Reset Clips"))
-                {
-                    GenerateResetClips();
-                }
-            }
-            HelpLabel("6. リセットアニメーションが含まれるAnimator Controllerが動かす全てのプロパティがシーン上の現在のアバターの状態にリセットされるリセットアニメーションが自動生成される！");
-            serializedObject.ApplyModifiedProperties();
-        }
-
-        void FindResetClips()
+        public void FindResetClips()
         {
             resetClips = CollectAnimatorControllers().SelectMany(animatorController => CollectClips(animatorController).Take(1)).ToList();
         }
 
-        void GenerateResetClips()
+        public void GenerateResetClips()
         {
             var clipCaches = CollectAnimatorControllers().ToDictionary(animatorController => animatorController, CollectClips);
             
@@ -172,12 +110,6 @@ namespace Silksprite.AvatarTinker.VRChat.ResetClipGenerator
                 });
             }
         }
-#endif
-
-        [MenuItem("Window/Avatar Tinker/VRChat/Reset Clip Generator", false, 60000)]
-        public static void CreateWindow()
-        {
-            CreateInstance<ResetClipGeneratorWindow>().Show();
-        }
     }
 }
+#endif

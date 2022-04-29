@@ -1,97 +1,19 @@
-// MIT License
-//
-// Copyright (c) 2022 kaikoga
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Silksprite.AvatarTinker.UnusedBoneDeleter
 {
-    public class UnusedBoneDeleterWindow : EditorWindow
+    [Serializable]
+    public class UnusedBoneDeleter
     {
-        Vector2 _scrollPosition = new Vector2(0, 0);
+        [SerializeField] public Animator avatarRoot;
+        [SerializeField] public Transform armatureRoot;
+        [SerializeField] public List<Transform> unusedBones;
 
-        [SerializeField] Animator avatarRoot;
-        [SerializeField] Transform armatureRoot;
-        [SerializeField] List<Transform> unusedBones;
-
-        public void OnEnable()
-        {
-            titleContent = new GUIContent("Unused Bone Deleter");
-        }
-
-        public void OnGUI()
-        {
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-            
-            void HelpLabel(string message)
-            {
-                GUILayout.Label(message.Replace(" ", " "), new GUIStyle{wordWrap = true});
-            }
-
-            var serializedObject = new SerializedObject(this);
-            GUILayout.Label("余ったボーン削除くん", new GUIStyle{fontStyle = FontStyle.Bold});
-            GUILayout.Space(4f);
-            EditorGUILayout.HelpBox("使われていないボーンを検索して削除します。このツールはメッシュを編集しないのでSkinnedMeshRendererからボーンへの参照は壊れますが、ウェイトが塗られていないはずなのでたぶん安全です。".Replace(" ", " "), MessageType.Info);
-            GUILayout.Space(4f);
-            HelpLabel("1. アバターをUnpack Prefabする");
-            HelpLabel("2. アバターのAnimatorを↓にセットする");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("avatarRoot"));
-            HelpLabel("3. オプション：ボーン階層の一番上を↓にセットする（省略するとHipボーンが選択されます）");
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("armatureRoot"));
-            HelpLabel("4. Select Unused Bonesボタンを押す");
-            EditorGUILayout.HelpBox("「Select Unused Bones in Skinned Mesh」はヒエラルキーからGameObjectを検索します。\n「Select Unused Bones in Armature」はウェイトが塗られていないボーンだけ検索します。".Replace(" ", " "), MessageType.Info);
-            using (new EditorGUI.DisabledScope(avatarRoot == null))
-            {
-                if (GUILayout.Button("Select Unused Bones in Armature"))
-                {
-                    SelectUnusedBones();
-                }
-                if (GUILayout.Button("Select Unused Bone in Skinned Mesh"))
-                {
-                    SelectUnusedSkinnedMeshBones();
-                }
-            }
-            HelpLabel("5. 検出された使われていないボーンが↓に表示されるはず");
-
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("unusedBones"));
-
-            HelpLabel("6. 個別に選択して手動で削除するか、一番下のボタンで一括削除する");
-            using (new EditorGUI.DisabledScope(unusedBones == null))
-            {
-                if (GUILayout.Button("Delete Unused Bones"))
-                {
-                    DeleteUnusedBones();
-                }
-            }
-            HelpLabel("7. ボーンが見えてしまう一部の環境で、ちょっとだけ綺麗になります。");
-            serializedObject.ApplyModifiedProperties();
-            
-            EditorGUILayout.EndScrollView();
-        }
-
-        void SelectUnusedBones()
+        public void SelectUnusedBones()
         {
             if (armatureRoot == null) armatureRoot = avatarRoot.GetBoneTransform(HumanBodyBones.Hips); 
 
@@ -101,7 +23,7 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
             MarkBonesAsUsed();
         }
 
-        void SelectUnusedSkinnedMeshBones()
+        public void SelectUnusedSkinnedMeshBones()
         {
             unusedBones = CollectSkinnedMeshRendererBones(avatarRoot).ToList();
 
@@ -140,11 +62,11 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
             }
         }
 
-        void DeleteUnusedBones()
+        public void DeleteUnusedBones()
         {
             foreach (var unusedBone in unusedBones.ToArray())
             {
-                if (unusedBone) DestroyImmediate(unusedBone.gameObject);
+                if (unusedBone) Object.DestroyImmediate(unusedBone.gameObject);
             };
         }
 
@@ -217,11 +139,5 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
         }
 
         static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
-
-        [MenuItem("Window/Avatar Tinker/Unused Bone Deleter", false, 60000)]
-        public static void CreateWindow()
-        {
-            CreateInstance<UnusedBoneDeleterWindow>().Show();
-        }
     }
 }
