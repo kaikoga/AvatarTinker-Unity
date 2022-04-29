@@ -114,7 +114,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                 }
             }
             HelpLabel("6. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
-            EditorGUILayout.HelpBox("PhysBoneを動かすことも、分解することもできます。\n（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Warning);
+            EditorGUILayout.HelpBox("PhysBoneを動かすことも、分解することもできます。\n（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Info);
             serializedCore.serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.EndScrollView();
