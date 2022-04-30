@@ -81,6 +81,7 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
         IEnumerable<Transform> CollectComponentSuspiciousBones(Animator animator)
         {
             return animator.GetComponentsInChildren<Component>(true)
+                .Where(component => component != null) // remove Missing Scripts
                 .Where(component =>
                 {
                     var n = component.GetType().Name;

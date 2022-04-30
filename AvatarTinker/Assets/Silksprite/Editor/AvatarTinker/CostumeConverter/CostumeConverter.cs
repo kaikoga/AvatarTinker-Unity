@@ -67,7 +67,9 @@ namespace Silksprite.AvatarTinker.CostumeConverter
                 {
                     const float epsilon = 0.0001f;
                     var boneHasPosition = bone.localPosition.magnitude > epsilon || bone.localRotation != Quaternion.identity || (bone.localScale - Vector3.one).magnitude > epsilon;
-                    var boneIsReactive = bone.GetComponents<Component>().Select(c => c.GetType().Name)
+                    var boneIsReactive = bone.GetComponents<Component>()
+                        .Where(component => component != null) // remove Missing Scripts
+                        .Select(component => component.GetType().Name)
                         .Any(n =>
                         {
                             // Latest AI to guess this bone is required
