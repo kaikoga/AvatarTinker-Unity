@@ -34,7 +34,7 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
             HelpLabel("3. オプション：ボーン階層の一番上を↓にセットする（省略するとHipボーンが選択されます）");
             EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("armatureRoot"));
             HelpLabel("4. Select Unused Bonesボタンを押す");
-            EditorGUILayout.HelpBox("「Select Unused Bones in Skinned Mesh」はヒエラルキーからGameObjectを検索します。\n「Select Unused Bones in Armature」はウェイトが塗られていないボーンだけ検索します。".Replace(" ", " "), MessageType.Info);
+            EditorGUILayout.HelpBox("「Select Unused Bones in Armature」はヒエラルキーからGameObjectを検索します。\n「Select Unused Bones in Skinned Mesh」はウェイトが塗られていないボーンだけ検索します。".Replace(" ", " "), MessageType.Info);
             using (new EditorGUI.DisabledScope(core.avatarRoot == null))
             {
                 if (GUILayout.Button("Select Unused Bones in Armature"))

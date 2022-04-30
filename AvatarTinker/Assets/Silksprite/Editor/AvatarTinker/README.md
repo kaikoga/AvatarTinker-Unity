@@ -41,4 +41,9 @@ v0.1.0 リリース。
 - Reset Clip Generator を追加。
 - Phys Bone Combiner を追加。
 
+v0.2.0 更新。
+
+- Unused Bone Deleter を追加。
+- Costume Converter の安定性を改善。
+
 (c) kaikoga 2022.
