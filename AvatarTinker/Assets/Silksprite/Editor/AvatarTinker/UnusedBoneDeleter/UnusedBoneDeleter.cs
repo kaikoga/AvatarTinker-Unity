@@ -51,9 +51,14 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
                 MarkBoneAsUsed(meshRendererBone);
             }
 
-            foreach (var meshRendererBone in CollectComponentSuspiciousBones(avatarRoot))
+            foreach (var suspiciousBones in CollectComponentSuspiciousBones(avatarRoot))
             {
-                MarkBoneAsUsed(meshRendererBone);
+                MarkBoneAsUsed(suspiciousBones);
+            }
+
+            foreach (var suspiciousDynamicBones in CollectSuspiciousDynamicBonesChildren(avatarRoot))
+            {
+                MarkBoneAsUsed(suspiciousDynamicBones);
             }
 
             foreach (var skinnedMeshRendererBone in CollectSkinnedMeshRendererUsedBones(avatarRoot))
@@ -110,6 +115,32 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
                     return false;
                 })
                 .Select(component => component.transform)
+                .Distinct();
+        }
+
+        IEnumerable<Transform> CollectSuspiciousDynamicBonesChildren(Animator animator)
+        {
+            return animator.GetComponentsInChildren<Component>(true)
+                .Where(component => component != null) // remove Missing Scripts
+                .Where(component =>
+                {
+                    var n = component.GetType().Name;
+                    if ( n.Contains("Bone")) return true;
+                    return false;
+                })
+                .SelectMany(component =>
+                {
+                    #if VRC_SDK_VRCSDK3
+                    if (component is VRC.SDK3.Dynamics.PhysBone.Components.VRCPhysBone physBone)
+                    {
+                        component = physBone.GetRootTransform();
+                        // TODO: what about ignoreTransforms?
+                    }
+                    // TODO: DynamicBone
+                    // TODO: SpringBone
+                    #endif
+                    return component.GetComponentsInChildren<Transform>(true);
+                })
                 .Distinct();
         }
 
