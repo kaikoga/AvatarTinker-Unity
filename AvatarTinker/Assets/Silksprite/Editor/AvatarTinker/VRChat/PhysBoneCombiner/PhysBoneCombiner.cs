@@ -101,6 +101,12 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
         public void AssembleMultiChild()
         {
+            if (childBones.Count < 2)
+            {
+                Debug.LogError("Cannot combine single bone");
+                return;
+            }
+
             var allAffectedList = childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
             var ignoreList = AffectedListToIgnoreList(parentBone, allAffectedList, false).ToList();
             targetPhysBone = CreatePhysBone(parentBone, parentBone, childBones.First());
