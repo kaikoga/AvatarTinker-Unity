@@ -94,13 +94,13 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("destination"));
             using (new EditorGUI.DisabledScope(core.targetPhysBone == null || core.parentBone == null || core.childBones == null || core.childBones.Count == 0))
             {
-                using (new EditorGUI.DisabledScope(core.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Disassembled || core.childBones == null || core.childBones.Count > 1))
+                using (new EditorGUI.DisabledScope(core.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Disassembled || core.childBones == null || core.childBones.Count <= 1))
                 {
                     if (GUILayout.Button("Assemble Multi Child"))
                     {
                         core.AssembleMultiChild();
                     }
-                    if (core.childBones != null && core.childBones.Count > 1)
+                    if (core.childBones != null && core.childBones.Count == 1)
                     {
                         EditorGUILayout.HelpBox("ツールの性質上、１本しかないPhysBoneをまとめることはできません。", MessageType.Warning);
                     }
