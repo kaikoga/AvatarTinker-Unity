@@ -15,7 +15,9 @@ namespace Silksprite.AvatarTinker.UnusedBoneDeleter
 
         public void SelectUnusedBones()
         {
-            if (armatureRoot == null) armatureRoot = avatarRoot.GetBoneTransform(HumanBodyBones.Hips); 
+            if (!avatarRoot.GetComponentsInChildren<Transform>().Contains(armatureRoot)) armatureRoot = null;
+
+            if (armatureRoot == null) armatureRoot = avatarRoot.GetBoneTransform(HumanBodyBones.Hips);
 
             unusedBones = new List<Transform>();
             armatureRoot.GetComponentsInChildren(true, unusedBones);
