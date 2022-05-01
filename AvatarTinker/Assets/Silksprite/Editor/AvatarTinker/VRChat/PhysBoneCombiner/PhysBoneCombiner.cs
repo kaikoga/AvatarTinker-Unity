@@ -46,6 +46,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             {
                 parentBone = null;
                 childBones = new List<Transform>();
+                childPhysBones = new List<VRCPhysBone>();
                 return;
             }
 
@@ -84,6 +85,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                 default:
                     parentBone = null;
                     childBones = new List<Transform>();
+                    childPhysBones = new List<VRCPhysBone>();
                     break;
             }
         }
