@@ -67,24 +67,29 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
                     if (GUILayout.Button("Select"))
                     {
-                        core.SelectTarget(i, core.allPhysBones[i]);
+                        core.SelectTarget(i);
                     }
                 }
             }
             HelpLabel("4. ↓のリストに親ボーン候補と（同じ揺れ方をする）子ボーン候補が入る");
             using (new EditorGUI.DisabledScope(_lockGeneratedFields))
             {
-                EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("targetPhysBoneIndex"));
-                EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("targetPhysBone"));
-                EditorGUILayout.LabelField(serializedCore.FindPropertyRelative("targetPhysBoneRole").displayName, HumanPhysBoneRole(core.targetPhysBoneRole, false));
-                EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("parentBone"));
-                EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("childBones"));
-                EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("childPhysBones"));
+                if (core.currentInfo != null)
+                {
+                    EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("targetPhysBoneIndex"));
+                    var currentInfoProperty = serializedCore.FindPropertyRelative("currentInfo");
+                    EditorGUILayout.PropertyField(currentInfoProperty.FindPropertyRelative("targetPhysBone"));
+                    EditorGUILayout.LabelField(currentInfoProperty.FindPropertyRelative("targetPhysBoneRole").displayName, HumanPhysBoneRole(core.currentInfo.targetPhysBoneRole, false));
+                    EditorGUILayout.PropertyField(currentInfoProperty.FindPropertyRelative("parentBone"));
+                    EditorGUILayout.PropertyField(currentInfoProperty.FindPropertyRelative("childBones"));
+                    EditorGUILayout.PropertyField(currentInfoProperty.FindPropertyRelative("childPhysBones"));
+                }
             }
 
-            if (core.targetPhysBone)
+            if (core.currentInfo?.targetPhysBone)
             {
-                if (core.targetPhysBone.GetRootTransform().parent == core.targetPhysBone.transform && PhysBoneCombiner.CollectHumanoidBones(core.avatarRoot).Contains(core.targetPhysBone.transform))
+                var targetPhysBone = core.currentInfo.targetPhysBone;
+                if (targetPhysBone.GetRootTransform().parent == targetPhysBone.transform && PhysBoneCombiner.CollectHumanoidBones(core.avatarRoot).Contains(targetPhysBone.transform))
                 {
                     EditorGUILayout.HelpBox("Humanoidボーンに刺さっていたDynamicBoneが自動変換されたような構造が検知されました。アバターの前髪がJawボーンとして誤検知されていたりしないか確認してください。\nPhysBoneコンポーネントの修正が必要かもしれません。\nアバターによっては正常なので、その場合はこのメッセージを気にしないでください。", MessageType.Warning);
                 }
@@ -92,20 +97,20 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
             HelpLabel("5. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、動かしたい先にDestinationを設定してボタンを押す");
             EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("destination"));
-            using (new EditorGUI.DisabledScope(core.targetPhysBone == null || core.parentBone == null || core.childBones == null || core.childBones.Count == 0))
+            using (new EditorGUI.DisabledScope(core.currentInfo == null || core.currentInfo.childBones == null || core.currentInfo.childBones.Count == 0))
             {
-                using (new EditorGUI.DisabledScope(core.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Disassembled || core.childBones == null || core.childBones.Count <= 1))
+                using (new EditorGUI.DisabledScope(core.currentInfo?.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Disassembled || core.currentInfo.childBones == null || core.currentInfo.childBones.Count <= 1))
                 {
                     if (GUILayout.Button("Assemble Multi Child"))
                     {
                         core.AssembleMultiChild();
                     }
                 }
-                if (core.childBones != null && core.childBones.Count == 1)
+                if (core.currentInfo?.childBones != null && core.currentInfo.childBones.Count == 1)
                 {
                     EditorGUILayout.HelpBox("ツールの性質上、１本しかないPhysBoneをまとめることはできません。", MessageType.Warning);
                 }
-                using (new EditorGUI.DisabledScope(core.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Composed))
+                using (new EditorGUI.DisabledScope(core.currentInfo?.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Composed))
                 {
                     if (GUILayout.Button("Disassemble Multi Child"))
                     {

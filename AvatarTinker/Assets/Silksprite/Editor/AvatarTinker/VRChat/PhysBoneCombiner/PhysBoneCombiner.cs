@@ -18,11 +18,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
         [SerializeField] public List<PhysBoneInfo> allPhysBoneInfos = new List<PhysBoneInfo>();
         
         [SerializeField] public int targetPhysBoneIndex;
-        [SerializeField] public VRCPhysBone targetPhysBone;
-        [SerializeField] public PhysBoneRole targetPhysBoneRole;
-        [SerializeField] public Transform parentBone;
-        [SerializeField] public List<Transform> childBones = new List<Transform>();
-        [SerializeField] public List<VRCPhysBone> childPhysBones = new List<VRCPhysBone>();
+        [SerializeField] public PhysBoneInfo currentInfo;
 
         [SerializeField] PhysBoneDestination destination = PhysBoneDestination.PhysBoneRootTransform;
 
@@ -31,22 +27,13 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             allPhysBones = avatarRoot.GetComponentsInChildren<VRCPhysBone>().ToList();
             allPhysBoneInfos = allPhysBones.Select(pb => GuessTarget(pb, allPhysBones)).ToList();
             targetPhysBoneIndex = 0;
-            targetPhysBone = null;
-            parentBone = null;
-            childBones = new List<Transform>();
-            childPhysBones = new List<VRCPhysBone>();
+            currentInfo = null;
         }
 
-        public void SelectTarget(int index, VRCPhysBone target)
+        public void SelectTarget(int index)
         {
             targetPhysBoneIndex = index;
-            targetPhysBone = target;
-
-            var info = allPhysBoneInfos[index];
-            targetPhysBoneRole = info.targetPhysBoneRole;
-            parentBone = info.parentBone;
-            childBones = info.childBones;
-            childPhysBones = info.childPhysBones;
+            currentInfo = allPhysBoneInfos[index];
         }
 
         static PhysBoneInfo GuessTarget(VRCPhysBone target, List<VRCPhysBone> allPhysBones)
@@ -108,19 +95,19 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
         public void AssembleMultiChild()
         {
-            if (childBones.Count < 2)
+            if (currentInfo.childBones.Count < 2)
             {
                 Debug.LogError("Cannot combine single bone");
                 return;
             }
 
-            var allAffectedList = childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
-            var ignoreList = AffectedListToIgnoreList(parentBone, allAffectedList, false).ToList();
+            var allAffectedList = currentInfo.childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
+            var ignoreList = AffectedListToIgnoreList(currentInfo.parentBone, allAffectedList, false).ToList();
             IntegrateDummyParent();
-            targetPhysBone = CreatePhysBone(parentBone, parentBone, childBones.First());
+            var targetPhysBone = CreatePhysBone(currentInfo.parentBone, currentInfo.parentBone, currentInfo.childBones.First());
             targetPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Ignore;
             targetPhysBone.ignoreTransforms = ignoreList;
-            foreach (var childPhysBone in childPhysBones.ToArray())
+            foreach (var childPhysBone in currentInfo.childPhysBones.ToArray())
             {
                 if (childPhysBone) Object.DestroyImmediate(childPhysBone);
             }
@@ -129,60 +116,60 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
             void IntegrateDummyParent()
             {
-                var dummyParent = new GameObject($"{parentBone.name}_PBGroup").transform;
-                dummyParent.SetParent(parentBone, false);
-                foreach (var child in childBones)
+                var dummyParent = new GameObject($"{currentInfo.parentBone.name}_PBGroup").transform;
+                dummyParent.SetParent(currentInfo.parentBone, false);
+                foreach (var child in currentInfo.childBones)
                 {
                     child.transform.SetParent(dummyParent, false);
                 }
-                parentBone = dummyParent;
+                currentInfo.parentBone = dummyParent;
             }
         }
 
         public void DisassembleMultiChild()
         {
-            var allAffectedList = IgnoreListToAffectedList(targetPhysBone, false).ToList();
-            foreach (Transform child in childBones)
+            var allAffectedList = IgnoreListToAffectedList(currentInfo.targetPhysBone, false).ToList();
+            foreach (Transform child in currentInfo.childBones)
             {
                 var childAffectedList = allAffectedList.Where(t => IsDescendant(child, t)).ToList();
                 if (!childAffectedList.Any()) continue;
                 var ignoreList = AffectedListToIgnoreList(child, childAffectedList, false).ToList();
 
-                var childPhysBone = CreatePhysBone(child, parentBone, child);
+                var childPhysBone = CreatePhysBone(child, currentInfo.parentBone, child);
                 childPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Average;
                 childPhysBone.ignoreTransforms = ignoreList;
             }
             
             DisintegrateDummyParent();
-            Object.DestroyImmediate(targetPhysBone);
+            Object.DestroyImmediate(currentInfo.targetPhysBone);
 
             CollectPhysBones();
 
             void DisintegrateDummyParent()
             {
                 const float epsilon = 0.0001f;
-                var boneHasPosition = parentBone.localPosition.magnitude > epsilon || parentBone.localRotation != Quaternion.identity || (parentBone.localScale - Vector3.one).magnitude > epsilon;
+                var boneHasPosition = currentInfo.parentBone.localPosition.magnitude > epsilon || currentInfo.parentBone.localRotation != Quaternion.identity || (currentInfo.parentBone.localScale - Vector3.one).magnitude > epsilon;
                 if (boneHasPosition) return;
-                if (!parentBone.GetComponents<Component>().All(c => c is Transform || c is VRCPhysBone)) return;
+                if (!currentInfo.parentBone.GetComponents<Component>().All(c => c is Transform || c is VRCPhysBone)) return;
 
-                var actualParent = parentBone.parent;
-                foreach (var child in childBones)
+                var actualParent = currentInfo.parentBone.parent;
+                foreach (var child in currentInfo.childBones)
                 {
                     child.transform.SetParent(actualParent, false);
                 }
 
                 // TransplantPhysBone(parentBone, actualParent.gameObject);
                 // Just destroy because parent PhysBone is already disintegrated into child PhysBones
-                Object.DestroyImmediate(parentBone.gameObject);
-                parentBone = actualParent;
+                Object.DestroyImmediate(currentInfo.parentBone.gameObject);
+                currentInfo.parentBone = actualParent;
             }
         }
 
         public void MovePhysBone()
         {
-            var newPhysBone = CreatePhysBone(targetPhysBone.GetRootTransform(), parentBone, childBones.First());
-            Object.DestroyImmediate(targetPhysBone);
-            targetPhysBone = newPhysBone;
+            var newPhysBone = CreatePhysBone(currentInfo.targetPhysBone.GetRootTransform(), currentInfo.parentBone, currentInfo.childBones.First());
+            Object.DestroyImmediate(currentInfo.targetPhysBone);
+            currentInfo.targetPhysBone = newPhysBone;
 
             CollectPhysBones();
         }
@@ -217,13 +204,13 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                     destinationObject = physBoneRoot.gameObject;
                     break;
             }
-            return TransplantPhysBone(physBoneRoot, destinationObject);
+            return TransplantPhysBone(currentInfo.targetPhysBone, physBoneRoot, destinationObject);
         }
 
-        VRCPhysBone TransplantPhysBone(Transform physBoneRoot, GameObject destinationObject)
+        VRCPhysBone TransplantPhysBone(VRCPhysBone source, Transform physBoneRoot, GameObject destinationObject)
         {
             var physBone = destinationObject.AddComponent<VRCPhysBone>();
-            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(targetPhysBone), physBone);
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(source), physBone);
             physBone.rootTransform = physBoneRoot;
             return physBone;
         }
