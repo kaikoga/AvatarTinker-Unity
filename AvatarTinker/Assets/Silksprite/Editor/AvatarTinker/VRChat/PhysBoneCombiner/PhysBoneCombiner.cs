@@ -97,6 +97,30 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             return info;
         }
 
+        public void AssembleAllMultiChild()
+        {
+            for (;;)
+            {
+                CollectPhysBones();
+                currentInfo = allPhysBoneInfos.FirstOrDefault(info => info.targetPhysBoneRole == PhysBoneRole.Disassembled);
+                if (currentInfo == null) break;
+                AssembleMultiChild();
+            }
+            CollectPhysBones();
+        }
+
+        public void DisassembleAllMultiChild()
+        {
+            for (;;)
+            {
+                CollectPhysBones();
+                currentInfo = allPhysBoneInfos.FirstOrDefault(info => info.targetPhysBoneRole == PhysBoneRole.Composed);
+                if (currentInfo == null) break;
+                DisassembleMultiChild();
+            }
+            CollectPhysBones();
+        }
+
         public void AssembleMultiChild()
         {
             if (currentInfo.childBones.Count < 2)

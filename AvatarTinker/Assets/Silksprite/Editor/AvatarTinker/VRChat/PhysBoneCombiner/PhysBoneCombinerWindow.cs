@@ -123,8 +123,17 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                     core.MovePhysBone();
                 }
             }
-            HelpLabel("6. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
             EditorGUILayout.HelpBox("PhysBoneを動かすことも、分解することもできます。\n（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Info);
+            HelpLabel("6. または、↓のボタンで一括操作する");
+            if (GUILayout.Button("Assemble All Multi Child"))
+            {
+                core.AssembleAllMultiChild();
+            }
+            if (GUILayout.Button("Disassemble All Multi Child"))
+            {
+                core.DisassembleAllMultiChild();
+            }
+            HelpLabel("7. うまくいくと、VRCPhysBoneのコンポーネント数が減ります");
             serializedCore.serializedObject.ApplyModifiedProperties();
 
             EditorGUILayout.EndScrollView();
