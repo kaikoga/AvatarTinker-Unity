@@ -52,7 +52,16 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             }
 
             Debug.Log(ExtractSettingString(target));
-            info.targetPhysBoneRole = GuessPhysBoneRole(info.targetPhysBone);
+
+            info.targetPhysBoneRole = PhysBoneRole.Disassembled;
+            if (info.targetPhysBone.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore)
+            {
+                info.targetPhysBoneRole = PhysBoneRole.Composed;
+                if (info.targetPhysBone.GetRootTransform().childCount == 1 && info.targetPhysBone.GetRootTransform().parent.childCount > 1)
+                {
+                    info.targetPhysBoneRole = PhysBoneRole.Disassembled;
+                }
+            };
 
             switch (info.targetPhysBoneRole)
             {
@@ -80,17 +89,6 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             }
 
             return info;
-        }
-        
-        static PhysBoneRole GuessPhysBoneRole(VRCPhysBone physBone)
-        {
-            var result = physBone.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore;
-            if (physBone.GetRootTransform().childCount == 1 && physBone.GetRootTransform().parent.childCount > 1)
-            {
-                result = false;
-            }
-
-            return result ? PhysBoneRole.Composed : PhysBoneRole.Disassembled;
         }
 
         public void AssembleMultiChild()
