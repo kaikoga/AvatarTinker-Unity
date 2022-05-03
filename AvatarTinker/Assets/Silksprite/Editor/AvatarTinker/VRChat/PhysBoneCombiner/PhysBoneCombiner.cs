@@ -42,54 +42,59 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             targetPhysBoneIndex = index;
             targetPhysBone = target;
 
-            if (targetPhysBone == null)
+            var info = GuessTarget(target, allPhysBones);
+            targetPhysBoneRole = info.targetPhysBoneRole;
+            parentBone = info.parentBone;
+            childBones = info.childBones;
+            childPhysBones = info.childPhysBones;
+        }
+
+        static PhysBoneInfo GuessTarget(VRCPhysBone target, List<VRCPhysBone> allPhysBones)
+        {
+            var info = new PhysBoneInfo
             {
-                parentBone = null;
-                childBones = new List<Transform>();
-                childPhysBones = new List<VRCPhysBone>();
-                return;
+                targetPhysBone = target,
+                parentBone = null,
+                childBones = new List<Transform>(),
+                childPhysBones = new List<VRCPhysBone>()
+            };
+
+            if (target == null)
+            {
+                return info;
             }
 
             Debug.Log(ExtractSettingString(target));
-            targetPhysBoneRole = GuessPhysBoneRole(targetPhysBone);
+            info.targetPhysBoneRole = GuessPhysBoneRole(info.targetPhysBone);
 
-            switch (targetPhysBoneRole)
+            switch (info.targetPhysBoneRole)
             {
                 case PhysBoneRole.Composed:
-                {
-                    parentBone = targetPhysBone.GetRootTransform();
-                    childBones = new List<Transform>();
-                    childPhysBones = new List<VRCPhysBone>();
-                    foreach (Transform transform in parentBone)
+                    info.parentBone = info.targetPhysBone.GetRootTransform();
+                    foreach (Transform transform in info.parentBone)
                     {
-                        if (targetPhysBone.ignoreTransforms.Contains(transform)) continue; 
-                        childBones.Add(transform);
+                        if (info.targetPhysBone.ignoreTransforms.Contains(transform)) continue;
+                        info.childBones.Add(transform);
                     }
                     break;
-                }
                 case PhysBoneRole.Disassembled:
-                {
-                    parentBone = targetPhysBone.GetRootTransform().parent;
-                    childBones = new List<Transform>();
-                    childPhysBones = new List<VRCPhysBone>();
+                    info.parentBone = info.targetPhysBone.GetRootTransform().parent;
                     foreach (var childPhysBone in allPhysBones)
                     {
-                        var childTransform = childPhysBone.GetRootTransform(); 
-                        if (childTransform.parent != parentBone) continue;
-                        if (!IsCommonSettings(targetPhysBone, childPhysBone)) continue;
-                        childBones.Add(childTransform);
-                        childPhysBones.Add(childPhysBone);
+                        var childTransform = childPhysBone.GetRootTransform();
+                        if (childTransform.parent != info.parentBone) continue;
+                        if (!IsCommonSettings(info.targetPhysBone, childPhysBone)) continue;
+                        info.childBones.Add(childTransform);
+                        info.childPhysBones.Add(childPhysBone);
                     }
                     break;
-                }
                 default:
-                    parentBone = null;
-                    childBones = new List<Transform>();
-                    childPhysBones = new List<VRCPhysBone>();
-                    break;
+                    throw new ArgumentOutOfRangeException();
             }
-        }
 
+            return info;
+        }
+        
         static PhysBoneRole GuessPhysBoneRole(VRCPhysBone physBone)
         {
             var result = physBone.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore;
@@ -282,6 +287,16 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
         }
 
         public static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
+
+        [Serializable]
+        class PhysBoneInfo
+        {
+            public VRCPhysBone targetPhysBone;
+            public PhysBoneRole targetPhysBoneRole;
+            public List<VRCPhysBone> childPhysBones;
+            public Transform parentBone;
+            public List<Transform> childBones;
+        }
 
         public enum PhysBoneRole
         {
