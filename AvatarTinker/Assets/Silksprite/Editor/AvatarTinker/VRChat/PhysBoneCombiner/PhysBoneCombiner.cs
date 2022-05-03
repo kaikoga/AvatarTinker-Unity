@@ -20,7 +20,8 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
         [SerializeField] public int targetPhysBoneIndex;
         [SerializeField] public PhysBoneInfo currentInfo;
 
-        [SerializeField] PhysBoneDestination destination = PhysBoneDestination.PhysBoneRootTransform;
+        [SerializeField] public PhysBoneDestination destination = PhysBoneDestination.PhysBoneRootTransform;
+        [SerializeField] public bool createDummyParent = true;
 
         public void CollectPhysBones()
         {
@@ -135,7 +136,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             }
 
             var allAffectedList = currentInfo.childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
-            IntegrateDummyParent();
+            if (createDummyParent) IntegrateDummyParent();
             var ignoreList = AffectedListToIgnoreList(currentInfo.parentBone, allAffectedList).ToList();
             var targetPhysBone = CreatePhysBone(currentInfo.parentBone, currentInfo.parentBone, currentInfo.childBones.First());
             targetPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Ignore;
@@ -173,7 +174,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                 childPhysBone.ignoreTransforms = ignoreList;
             }
             
-            DisintegrateDummyParent();
+            /* if (createDummyParent) */ DisintegrateDummyParent(); // NOTE: always disintegrate
             Object.DestroyImmediate(currentInfo.targetPhysBone);
 
             CollectPhysBones();
@@ -306,7 +307,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             return false;
         }
 
-        public static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
+        public IEnumerable<Transform> CollectHumanoidBones() => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(avatarRoot.GetBoneTransform).ToArray();
 
         [Serializable]
         public class PhysBoneInfo

@@ -89,7 +89,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             if (core.currentInfo?.targetPhysBone)
             {
                 var targetPhysBone = core.currentInfo.targetPhysBone;
-                if (targetPhysBone.GetRootTransform().parent == targetPhysBone.transform && PhysBoneCombiner.CollectHumanoidBones(core.avatarRoot).Contains(targetPhysBone.transform))
+                if (targetPhysBone.GetRootTransform().parent == targetPhysBone.transform && core.CollectHumanoidBones().Contains(targetPhysBone.transform))
                 {
                     EditorGUILayout.HelpBox("Humanoidボーンに刺さっていたDynamicBoneが自動変換されたような構造が検知されました。アバターの前髪がJawボーンとして誤検知されていたりしないか確認してください。\nPhysBoneコンポーネントの修正が必要かもしれません。\nアバターによっては正常なので、その場合はこのメッセージを気にしないでください。", MessageType.Warning);
                 }
@@ -97,6 +97,15 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
             HelpLabel("5. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、動かしたい先にDestinationを設定してボタンを押す");
             EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("destination"));
+            EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("createDummyParent"));
+            if (core.createDummyParent)
+            {
+                EditorGUILayout.HelpBox("CreateDummyParentをオン（推奨値）にすると、共通の揺れ方をするPhysBoneコンポーネントをダミーの親ボーンにまとめます。ボーン構造が変化するため一部のアニメーションクリップは再設定が必要です。", MessageType.Warning);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("CreateDummyParentをオフ（非推奨値）にすると、IgnoreTransformを利用してボーン構造を維持しながらPhysBoneをまとめます。ParentBoneがHumanoidボーンの場合は挙動が壊れるため使わないでください。", core.CollectHumanoidBones().Contains(core.currentInfo?.parentBone) ? MessageType.Error : MessageType.Warning);
+            }
             using (new EditorGUI.DisabledScope(core.currentInfo == null))
             {
                 var currentRole = core.currentInfo?.targetPhysBoneRole ?? PhysBoneCombiner.PhysBoneRole.Unknown;
@@ -123,7 +132,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                     core.MovePhysBone();
                 }
             }
-            EditorGUILayout.HelpBox("PhysBoneを動かすことも、分解することもできます。\n（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Info);
+            EditorGUILayout.HelpBox("（着せ替えでボーン構造を編集する際は分解しておいた方が安全です）", MessageType.Info);
             HelpLabel("6. または、↓のボタンで一括操作する");
             if (GUILayout.Button("Assemble All Multi Child"))
             {
