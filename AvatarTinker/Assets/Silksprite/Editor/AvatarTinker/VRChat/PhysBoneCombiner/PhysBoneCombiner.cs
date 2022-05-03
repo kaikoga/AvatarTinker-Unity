@@ -135,8 +135,8 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             }
 
             var allAffectedList = currentInfo.childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
-            var ignoreList = AffectedListToIgnoreList(currentInfo.parentBone, allAffectedList).ToList();
             IntegrateDummyParent();
+            var ignoreList = AffectedListToIgnoreList(currentInfo.parentBone, allAffectedList).ToList();
             var targetPhysBone = CreatePhysBone(currentInfo.parentBone, currentInfo.parentBone, currentInfo.childBones.First());
             targetPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Ignore;
             targetPhysBone.ignoreTransforms = ignoreList;
