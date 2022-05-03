@@ -15,7 +15,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
     {
         [SerializeField] public Animator avatarRoot;
         [SerializeField] public List<VRCPhysBone> allPhysBones = new List<VRCPhysBone>();
-        [SerializeField] public List<PhysBoneRole> allPhysBonesRole = new List<PhysBoneRole>();
+        [SerializeField] public List<PhysBoneInfo> allPhysBoneInfos = new List<PhysBoneInfo>();
         
         [SerializeField] public int targetPhysBoneIndex;
         [SerializeField] public VRCPhysBone targetPhysBone;
@@ -29,7 +29,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
         public void CollectPhysBones()
         {
             allPhysBones = avatarRoot.GetComponentsInChildren<VRCPhysBone>().ToList();
-            allPhysBonesRole = allPhysBones.Select(GuessPhysBoneRole).ToList();
+            allPhysBoneInfos = allPhysBones.Select(pb => GuessTarget(pb, allPhysBones)).ToList();
             targetPhysBoneIndex = 0;
             targetPhysBone = null;
             parentBone = null;
@@ -42,7 +42,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             targetPhysBoneIndex = index;
             targetPhysBone = target;
 
-            var info = GuessTarget(target, allPhysBones);
+            var info = allPhysBoneInfos[index];
             targetPhysBoneRole = info.targetPhysBoneRole;
             parentBone = info.parentBone;
             childBones = info.childBones;
@@ -289,7 +289,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
         public static IEnumerable<Transform> CollectHumanoidBones(Animator animator) => Enum.GetValues(typeof(HumanBodyBones)).OfType<HumanBodyBones>().Where(hbb => hbb != HumanBodyBones.LastBone).Select(animator.GetBoneTransform).ToArray();
 
         [Serializable]
-        class PhysBoneInfo
+        public class PhysBoneInfo
         {
             public VRCPhysBone targetPhysBone;
             public PhysBoneRole targetPhysBoneRole;

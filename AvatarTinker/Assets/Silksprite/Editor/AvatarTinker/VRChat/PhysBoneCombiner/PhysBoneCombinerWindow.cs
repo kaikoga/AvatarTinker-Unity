@@ -62,7 +62,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                     using (new EditorGUI.DisabledScope(_lockGeneratedFields))
                     {
                         EditorGUILayout.ObjectField($"Element {i}", core.allPhysBones[i], PhysBoneCombiner.PhysBoneType, false);
-                        GUILayout.Label(HumanPhysBoneRole(core.allPhysBonesRole[i], true), GUILayout.Width(24f));
+                        GUILayout.Label(HumanPhysBoneRole(core.allPhysBoneInfos[i].targetPhysBoneRole, true), GUILayout.Width(24f));
                     }
 
                     if (GUILayout.Button("Select"))
