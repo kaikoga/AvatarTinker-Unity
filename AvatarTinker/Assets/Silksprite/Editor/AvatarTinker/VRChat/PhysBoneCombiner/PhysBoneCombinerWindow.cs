@@ -38,7 +38,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             GUILayout.Space(4f);
             _lockGeneratedFields = EditorGUILayout.ToggleLeft("出力フィールドを保護する（デバッグ用）", _lockGeneratedFields);
             GUILayout.Space(4f);
-            HelpLabel("1. DynamicBoneは事前にPhysBoneに変換しておく。");
+            HelpLabel("1. DynamicBoneは事前にPhysBoneに変換しておく。PrefabはUnpackする。");
             GUILayout.Space(4f);
             HelpLabel("2. アバターを↓に入れてCollect PhysBonesボタンを押すと、使用されているPhysBoneコンポーネントがリストアップされる");
             EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("avatarRoot"));
@@ -62,8 +62,8 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                     using (new EditorGUI.DisabledScope(_lockGeneratedFields))
                     {
                         EditorGUILayout.ObjectField($"Element {i}", core.allPhysBones[i], PhysBoneCombiner.PhysBoneType, false);
-                        GUILayout.Label(HumanPhysBoneRole(core.allPhysBoneInfos[i].targetPhysBoneRole, true), GUILayout.Width(24f));
                     }
+                    GUILayout.Label(HumanPhysBoneRole(core.allPhysBoneInfos[i].targetPhysBoneRole, true), GUILayout.Width(24f));
 
                     if (GUILayout.Button("Select"))
                     {
@@ -97,20 +97,21 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
             HelpLabel("5. Child Phys Bonesの中身が２つ以上入っていたらそれらはコピペコンポーネントなので、動かしたい先にDestinationを設定してボタンを押す");
             EditorGUILayout.PropertyField(serializedCore.FindPropertyRelative("destination"));
-            using (new EditorGUI.DisabledScope(core.currentInfo == null || core.currentInfo.childBones == null || core.currentInfo.childBones.Count == 0))
+            using (new EditorGUI.DisabledScope(core.currentInfo == null))
             {
-                using (new EditorGUI.DisabledScope(core.currentInfo?.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Disassembled || core.currentInfo.childBones == null || core.currentInfo.childBones.Count <= 1))
+                var currentRole = core.currentInfo?.targetPhysBoneRole ?? PhysBoneCombiner.PhysBoneRole.Unknown;
+                using (new EditorGUI.DisabledScope(currentRole != PhysBoneCombiner.PhysBoneRole.Disassembled))
                 {
                     if (GUILayout.Button("Assemble Multi Child"))
                     {
                         core.AssembleMultiChild();
                     }
                 }
-                if (core.currentInfo?.childBones != null && core.currentInfo.childBones.Count == 1)
+                if (currentRole == PhysBoneCombiner.PhysBoneRole.Independent)
                 {
                     EditorGUILayout.HelpBox("ツールの性質上、１本しかないPhysBoneをまとめることはできません。", MessageType.Warning);
                 }
-                using (new EditorGUI.DisabledScope(core.currentInfo?.targetPhysBoneRole != PhysBoneCombiner.PhysBoneRole.Composed))
+                using (new EditorGUI.DisabledScope(currentRole != PhysBoneCombiner.PhysBoneRole.Composed))
                 {
                     if (GUILayout.Button("Disassemble Multi Child"))
                     {
@@ -139,6 +140,9 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                         return "+";
                     case PhysBoneCombiner.PhysBoneRole.Disassembled:
                         return "-";
+                    case PhysBoneCombiner.PhysBoneRole.Independent:
+                        return "1";
+                    case PhysBoneCombiner.PhysBoneRole.Unknown:
                     default:
                         return "?";
                 }
@@ -151,8 +155,11 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                         return "+ Composed";
                     case PhysBoneCombiner.PhysBoneRole.Disassembled:
                         return "- Disassembled";
+                    case PhysBoneCombiner.PhysBoneRole.Independent:
+                        return "1 Independent";
+                    case PhysBoneCombiner.PhysBoneRole.Unknown:
                     default:
-                        return "? 不明";
+                        return "? Unknown";
                 }
             }
         }

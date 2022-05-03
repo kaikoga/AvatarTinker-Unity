@@ -59,7 +59,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                 {
                     info.targetPhysBoneRole = PhysBoneRole.Disassembled;
                 }
-            };
+            }
 
             switch (info.targetPhysBoneRole)
             {
@@ -81,6 +81,14 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                         info.childBones.Add(childTransform);
                         info.childPhysBones.Add(childPhysBone);
                     }
+
+                    if (info.childBones.Count == 1)
+                    {
+                        info.targetPhysBoneRole = PhysBoneRole.Independent;
+                    }
+                    break;
+                case PhysBoneRole.Unknown:
+                case PhysBoneRole.Independent:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -98,7 +106,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             }
 
             var allAffectedList = currentInfo.childPhysBones.SelectMany(pb => IgnoreListToAffectedList(pb, true)).ToList();
-            var ignoreList = AffectedListToIgnoreList(currentInfo.parentBone, allAffectedList, false).ToList();
+            var ignoreList = AffectedListToIgnoreList(currentInfo.parentBone, allAffectedList).ToList();
             IntegrateDummyParent();
             var targetPhysBone = CreatePhysBone(currentInfo.parentBone, currentInfo.parentBone, currentInfo.childBones.First());
             targetPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Ignore;
@@ -129,7 +137,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             {
                 var childAffectedList = allAffectedList.Where(t => IsDescendant(child, t)).ToList();
                 if (!childAffectedList.Any()) continue;
-                var ignoreList = AffectedListToIgnoreList(child, childAffectedList, false).ToList();
+                var ignoreList = AffectedListToIgnoreList(child, childAffectedList).ToList();
 
                 var childPhysBone = CreatePhysBone(child, currentInfo.parentBone, child);
                 childPhysBone.multiChildType = VRCPhysBoneBase.MultiChildType.Average;
@@ -248,7 +256,7 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
             return result;
         }
         
-        static IEnumerable<Transform> AffectedListToIgnoreList(Transform rootTransform, List<Transform> affectedList, bool includeRoot = true)
+        static IEnumerable<Transform> AffectedListToIgnoreList(Transform rootTransform, List<Transform> affectedList)
         {
             var result = new List<Transform>();
             foreach (Transform child in rootTransform)
@@ -283,8 +291,10 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
 
         public enum PhysBoneRole
         {
+            Unknown,
             Composed,
-            Disassembled
+            Disassembled,
+            Independent
         }
 
         public enum PhysBoneDestination
