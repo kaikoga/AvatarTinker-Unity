@@ -70,6 +70,11 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                         if (info.targetPhysBone.ignoreTransforms.Contains(transform)) continue;
                         info.childBones.Add(transform);
                     }
+
+                    if (info.childBones.Count == 1)
+                    {
+                        info.targetPhysBoneRole = PhysBoneRole.Independent;
+                    }
                     break;
                 case PhysBoneRole.Disassembled:
                     info.parentBone = info.targetPhysBone.GetRootTransform().parent;
