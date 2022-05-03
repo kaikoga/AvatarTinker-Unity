@@ -51,8 +51,6 @@ namespace Silksprite.AvatarTinker.VRChat.PhysBoneCombiner
                 return info;
             }
 
-            Debug.Log(ExtractSettingString(target));
-
             info.targetPhysBoneRole = PhysBoneRole.Disassembled;
             if (info.targetPhysBone.multiChildType == VRCPhysBoneBase.MultiChildType.Ignore)
             {
