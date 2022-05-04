@@ -40,13 +40,13 @@ Avatar TinkerはMITライセンスで配布されます。
 
 ## 更新履歴
 
-v0.1.0 リリース。
+2022/4/26 v0.1.0 リリース。
 
 - Costume Converter を追加。
 - Reset Clip Generator を追加。
 - Phys Bone Combiner を追加。
 
-v0.2.0 更新。
+2022/5/3 v0.2.0 更新。
 
 - Unused Bone Deleter を追加。
 - Costume Converter の安定性を改善。
